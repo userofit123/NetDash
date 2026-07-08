@@ -1,0 +1,11 @@
+services:
+  netdash:
+      image: netdash:latest
+      container_name: netdash
+      restart: unless-stopped
+      privileged: true
+      network_mode: host
+      cap_add:
+        - NET_ADMIN
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock:ro

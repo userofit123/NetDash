@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #090c10;
+    --surface:  #0e1219;
+    --border:   #1c2230;
+    --accent:   #38bdf8;
+    --green:    #4ade80;
+    --red:      #f87171;
+    --amber:    #fbbf24;
+    --muted:    #4a5568;
+    --text:     #e2e8f0;
+    --subtext:  #64748b;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Space Grotesk', sans-serif; min-height:100vh; padding:24px; }
+  header { display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
+  .title { font-family:'JetBrains Mono',monospace; font-size:0.75rem; font-weight:600; letter-spacing:0.2em; text-transform:uppercase; color:var(--subtext); }
+  .title span { color:var(--accent); margin-right:8px; }
+  .controls { display:flex; align-items:center; gap:6px; }
+  .interval-group { display:flex; background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .interval-btn { background:none; border:none; color:var(--subtext); font-family:'Space Grotesk',sans-serif; font-size:0.8rem; font-weight:500; padding:6px 12px; cursor:pointer; transition:all 0.15s; border-right:1px solid var(--border); }
+  .interval-btn:last-child { border-right:none; }
+  .interval-btn:hover { color:var(--text); background:var(--border); }
+  .interval-btn.active { background:var(--accent); color:#000; font-weight:700; }
+  .refresh-btn { display:flex; align-items:center; gap:7px; background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--subtext); font-family:'Space Grotesk',sans-serif; font-size:0.8rem; padding:6px 12px; cursor:pointer; transition:all 0.15s; }
+  .refresh-btn:hover { color:var(--text); border-color:var(--accent); }
+  .refresh-btn svg { width:13px; height:13px; }
+  .refresh-btn.spinning svg { animation:spin 0.6s linear; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; position:relative; overflow:hidden; }
+  .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),transparent); opacity:0; transition:opacity 0.3s; }
+  .card:hover::before { opacity:1; }
+  .card-label { font-family:'JetBrains Mono',monospace; font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--subtext); margin-bottom:12px; }
+  .card-value { font-size:1.5rem; font-weight:600; line-height:1; }
+  .card-sub { font-size:0.8rem; color:var(--subtext); margin-top:6px; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; position:relative; }
+  .dot.green { background:var(--green); box-shadow:0 0 8px var(--green); animation:pulse-green 2s infinite; }
+  .dot.red { background:var(--red); }
+  .dot.amber { background:var(--amber); box-shadow:0 0 8px var(--amber); }
+  @keyframes pulse-green { 0%,100% { box-shadow:0 0 4px var(--green); } 50% { box-shadow:0 0 12px var(--green); } }
+  .quality-bar { width:100%; height:4px; background:var(--border); border-radius:2px; margin-top:10px; overflow:hidden; }
+  .quality-fill { height:100%; border-radius:2px; transition:width 0.5s ease; }
+  .speed-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .speed-box { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:14px; text-align:center; }
+  .speed-label { font-family:'JetBrains Mono',monospace; font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--subtext); margin-bottom:8px; }
+  .speed-val { font-family:'JetBrains Mono',monospace; font-size:1.1rem; font-weight:700; }
+  .dl { color:var(--green); }
+  .ul { color:var(--accent); }
+  .card.wide { grid-column:1 / -1; }
+  .info-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
+  .info-key { font-family:'JetBrains Mono',monospace; font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--subtext); margin-bottom:4px; }
+  .info-val { font-size:0.95rem; font-weight:500; color:var(--text); }
+  .loading { color:var(--muted); font-size:0.85rem; }
+  @keyframes fadeIn { from { opacity:0.5; } to { opacity:1; } }
+  .updated { animation:fadeIn 0.3s ease; }
+  .st-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:16px; }
+  .st-box { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:14px; text-align:center; }
+  .st-btn { display:inline-flex; align-items:center; gap:8px; background:var(--accent); border:none; border-radius:8px; color:#000; font-family:'Space Grotesk',sans-serif; font-size:0.85rem; font-weight:600; padding:10px 18px; cursor:pointer; transition:all 0.15s; }
+  .st-btn:hover { opacity:0.85; }
+  .st-btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .st-btn svg { width:14px; height:14px; }
+  .st-btn.spinning svg { animation:spin 1s linear infinite; }
+  .st-status { font-size:0.8rem; color:var(--subtext); margin-top:8px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="title"><span>//</span> Network Diagnostics</div>
+  <div class="controls">
+    <div class="interval-group">
+      <button class="interval-btn" data-s="1">1s</button>
+      <button class="interval-btn active" data-s="3">3s</button>
+      <button class="interval-btn" data-s="10">10s</button>
+    </div>
+    <button class="refresh-btn" id="refreshBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+      </svg>
+      <span id="timestamp">—</span>
+    </button>
+  </div>
+</header>
+<div class="grid" id="grid">
+  <div class="card" id="card-internet"><div class="card-label">Internet</div><div class="card-value loading">—</div></div>
+  <div class="card" id="card-conn"><div class="card-label">Connection</div><div class="card-value loading">—</div><div class="card-sub" id="sub-conn"></div></div>
+  <div class="card" id="card-standard"><div class="card-label">WiFi Standard</div><div class="card-value loading">—</div></div>
+  <div class="card"><div class="card-label">Live Speed</div><div class="speed-grid"><div class="speed-box"><div class="speed-label">↓ Download</div><div class="speed-val dl" id="val-dl">—</div></div><div class="speed-box"><div class="speed-label">↑ Upload</div><div class="speed-val ul" id="val-ul">—</div></div></div></div>
+  <div class="card" id="card-signal"><div class="card-label">Signal Strength</div><div class="card-value loading" id="val-signal">—</div><div class="card-sub" id="sub-signal"></div><div class="quality-bar"><div class="quality-fill" id="quality-fill" style="width:0%"></div></div></div>
+  <div class="card wide"><div class="card-label">Network Details</div><div class="info-grid"><div class="info-item"><div class="info-key">SSID</div><div class="info-val" id="d-ssid">—</div></div><div class="info-item"><div class="info-key">Frequency</div><div class="info-val" id="d-freq">—</div></div><div class="info-item"><div class="info-key">Band</div><div class="info-val" id="d-band">—</div></div><div class="info-item"><div class="info-key">Link Rate</div><div class="info-val" id="d-rate">—</div></div><div class="info-item"><div class="info-key">Signal</div><div class="info-val" id="d-signal">—</div></div><div class="info-item"><div class="info-key">Access Point</div><div class="info-val" id="d-ap">—</div></div></div></div>
+  <div class="card wide" id="card-speedtest">
+    <div class="card-label">Speed Test</div>
+    <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+      <button class="st-btn" id="stBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h7m0 0l-3 3m3-3l-3 3M21 12h-3m-5-8a7 7 0 1114 4.33"/></svg>
+        Run Speedtest
+      </button>
+      <span class="st-status" id="stStatus">Click to test max connection speed</span>
+    </div>
+    <div class="st-grid" id="stGrid" style="display:none">
+      <div class="st-box"><div class="speed-label">♨⚡ Ping</div><div class="speed-val" id="st-ping" style="color:var(--amber)">-</div></div>
+      <div class="st-box"><div class="speed-label">↓ Download</div><div class="speed-val dl" id="st-dl">-</div></div>
+      <div class="st-box"><div class="speed-label">↑ Upload</div><div class="speed-val ul" id="st-ul">-</div></div>
+    </div>
+  </div>
+</div>
+<script>
+  let intervalId=null, stPollId=null, stRunning=false;
+  function qualityColor(p){ return p>=70?'var(--green)':p>=40?'var(--amber)':'var(--red)'; }
+  function signalLabel(d){ d=parseInt(d); return d>=-50?'Excellent':d>=-60?'Good':d>=-70?'Fair':'Weak'; }
+  async function fetchStats(){
+    try{
+      const d=await (await fetch('/api/stats')).json();
+      document.getElementById('card-internet').querySelector('.card-value').innerHTML=`<span class="dot ${d.internet?'green':'red'}"></span>${d.internet?'Connected':'No Internet'}`;
+      document.getElementById('card-internet').querySelector('.card-value').style.color=d.internet?'var(--green)':'var(--red)';
+      document.getElementById('card-conn').querySelector('.card-value').textContent=d.conn_type;
+      document.getElementById('sub-conn').textContent=d.ssid!=='—'?d.ssid:'Wired connection';
+      document.getElementById('card-standard').querySelector('.card-value').textContent=d.wifi_standard;
+      document.getElementById('val-dl').textContent=d.download;
+      document.getElementById('val-ul').textContent=d.upload;
+      document.getElementById('val-signal').textContent=`${d.signal_dbm} dBm`;
+      document.getElementById('sub-signal').textContent=signalLabel(d.signal_dbm);
+      if(d.quality_pct!==null){ const f=document.getElementById('quality-fill'); f.style.width=d.quality_pct+'%'; f.style.background=qualityColor(d.quality_pct); }
+      document.getElementById('d-ssid').textContent=d.ssid;
+      document.getElementById('d-freq').textContent=d.frequency;
+      document.getElementById('d-band').textContent=d.band;
+      document.getElementById('d-rate').textContent=d.bit_rate;
+      document.getElementById('d-signal').textContent=d.signal_dbm+' dBm';
+      document.getElementById('d-ap').textContent=d.access_point;
+      document.getElementById('timestamp').textContent=d.timestamp;
+      document.getElementById('grid').classList.remove('updated');
+      void document.getElementById('grid').offsetWidth;
+      document.getElementById('grid').classList.add('updated');
+    }catch(e){ console.error(e); }
+  }
+  function setInterval_(ms){ if(intervalId)clearInterval(intervalId); if(!stRunning) intervalId=setInterval(fetchStats,ms); }
+  document.querySelectorAll('.interval-btn').forEach(b=>{ b.addEventListener('click',()=>{ document.querySelectorAll('.interval-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); setInterval_(parseInt(b.dataset.s)*1000); }); });
+  document.getElementById('refreshBtn').addEventListener('click',()=>{ const b=document.getElementById('refreshBtn'); b.classList.add('spinning'); fetchStats().then(()=>setTimeout(()=>b.classList.remove('spinning'),600)); });
+  function pollSpeedtest(){
+    stPollId=setInterval(async()=>{
+      const d=await (await fetch('/api/speedtest/result')).json();
+      if(!d.running && d.result){
+        clearInterval(stPollId);
+        stRunning=false;
+        const btn=document.getElementById('stBtn');
+        btn.disabled=false; btn.classList.remove('spinning');
+        if(d.result.error){
+          document.getElementById('stStatus').textContent='Error: '+d.result.error;
+        }else{
+          document.getElementById('stStatus').textContent='Last test: '+d.result.timestamp;
+          document.getElementById('st-ping').textContent=d.result.ping;
+          document.getElementById('st-dl').textContent=d.result.download;
+          document.getElementById('st-ul').textContent=d.result.upload;
+          document.getElementById('stGrid').style.display='grid';
+        }
+        setInterval_(parseInt(document.querySelector('.interval-btn.active').dataset.s)*1000);
+      }
+    },2000);
+  }
+  document.getElementById('stBtn').addEventListener('click',async()=>{
+    const btn=document.getElementById('stBtn');
+    btn.disabled=true; btn.classList.add('spinning');
+    stRunning=true;
+    if(intervalId) clearInterval(intervalId);
+    document.getElementById('stStatus').textContent='Running speedtest... this takes ~30 seconds';
+    await fetch('/api/speedtest/run', {method:'POST'});
+    pollSpeedtest();
+  });
+  fetchStats();
+  setInterval_(3000);
+</script>
+</body>
+</html>
