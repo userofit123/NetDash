@@ -1,5 +1,6 @@
 services:
   netdash:
+      build: .
       image: netdash:latest
       container_name: netdash
       restart: unless-stopped
@@ -9,3 +10,4 @@ services:
         - NET_ADMIN
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock:ro
+        - ./speedtest_history.json:/app/speedtest_history.json

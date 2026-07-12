@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, send_file
-import subprocess, re, time, threading, socket, os
+import subprocess, re, time, threading, socket, os, json
 
 app = Flask(__name__)
 
@@ -8,9 +8,22 @@ _speedtest_running = False
 _speedtest_result = None
 _host_iface = None
 
+HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'speedtest_history.json')
+_speedtest_history = []
+
+def load_history():
+    global _speedtest_history
+    try:
+        with open(HISTORY_FILE) as f:
+            _speedtest_history = json.load(f)
+    except:
+        _speedtest_history = []
+
+load_history()
+
 def run(cmd):
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=4)
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
         return r.stdout + r.stderr
     except:
         return ''
@@ -84,17 +97,35 @@ def check_internet():
         pass
     return False
 
+def get_network_snapshot():
+    """Capture full network state for speedtest history"""
+    internet = check_internet()
+    net_info, iface = get_host_network_info()
+    conn_display = f"{net_info['conn_type_label']} ({iface})"
+    return {
+        'internet': internet,
+        'conn_type': conn_display,
+        'ssid': net_info['ssid'],
+        'frequency': net_info['frequency'],
+        'band': net_info['band'],
+        'bit_rate': net_info['bit_rate'],
+        'signal_dbm': net_info['signal_dbm'],
+        'quality_pct': net_info['quality_pct'],
+        'access_point': net_info['access_point'],
+        'wifi_standard': net_info['wifi_standard'],
+    }
+
 def get_host_network_info():
     """Get network info from the host system"""
     info = {
-        'ssid': '—',
-        'frequency': '—',
-        'band': '—',
-        'signal_dbm': '—',
+        'ssid': '\u2013',
+        'frequency': '\u2013',
+        'band': '\u2013',
+        'signal_dbm': '\u2013',
         'quality_pct': None,
-        'bit_rate': '—',
-        'access_point': '—',
-        'wifi_standard': '—',
+        'bit_rate': '\u2013',
+        'access_point': '\u2013',
+        'wifi_standard': '\u2013',
         'conn_type_label': 'Unknown'
     }
     
@@ -162,7 +193,7 @@ def get_host_network_info():
         pass
     
     # Fallback: try iwconfig for older systems or additional info
-    if info['ssid'] == '—':
+    if info['ssid'] == '\u2013':
         try:
             iwconfig_out = run(['iwconfig', iface])
             if iwconfig_out and 'ESSID' in iwconfig_out:
@@ -196,20 +227,32 @@ def fmt_speed(bps):
     return f"{int(bps)} B/s"
 
 def run_speedtest_bg():
-    global _speedtest_running, _speedtest_result
+    global _speedtest_running, _speedtest_result, _speedtest_history
     try:
         r = subprocess.run(['speedtest-cli', '--simple'], capture_output=True, text=True, timeout=60)
         out = r.stdout
+        err = r.stderr
+        # Check for failures
+        if r.returncode != 0 or 'ERROR' in out or 'Cannot retrieve' in out:
+            _speedtest_result = {'error': (err or out).strip() or 'speedtest-cli failed'}
+            return
         ping  = re.search(r'Ping:\s+([\d.]+)\s+ms', out)
         dl    = re.search(r'Download:\s+([\d.]+)\s+Mbit/s', out)
         ul    = re.search(r'Upload:\s+([\d.]+)\s+Mbit/s', out)
+        snapshot = get_network_snapshot()
         _speedtest_result = {
-            'ping':     ping.group(1) + ' ms' if ping else '—',
-            'download': dl.group(1) + ' Mbps' if dl else '—',
-            'upload':   ul.group(1) + ' Mbps' if ul else '—',
-            'timestamp': time.strftime('%I:%M:%S %p'),
-            'error': None
+            'ping':     ping.group(1) + ' ms' if ping else '\u2013',
+            'download': dl.group(1) + ' Mbps' if dl else '\u2013',
+            'upload':   ul.group(1) + ' Mbps' if ul else '\u2013',
+            'timestamp': time.strftime('%Y-%m-%d %I:%M:%S %p'),
+            'error': None,
+            'network': snapshot
         }
+        # Persist to history
+        entry = dict(_speedtest_result)
+        _speedtest_history.append(entry)
+        with open(HISTORY_FILE, 'w') as f:
+            json.dump(_speedtest_history, f, indent=2)
     except Exception as e:
         _speedtest_result = {'error': str(e)}
     finally:
@@ -232,6 +275,10 @@ def speedtest_result():
         'result':  _speedtest_result
     })
 
+@app.route('/api/speedtest/history')
+def speedtest_history():
+    return jsonify(_speedtest_history)
+
 @app.route('/api/stats')
 def stats():
     global _prev
@@ -243,8 +290,8 @@ def stats():
     now = time.time()
     rx, tx = get_proc_bytes(iface)
     elapsed = now - _prev['time']
-    dl = fmt_speed((rx - _prev['rx']) / elapsed) if elapsed > 0 else '—'
-    ul = fmt_speed((tx - _prev['tx']) / elapsed) if elapsed > 0 else '—'
+    dl = fmt_speed((rx - _prev['rx']) / elapsed) if elapsed > 0 else '\u2013'
+    ul = fmt_speed((tx - _prev['tx']) / elapsed) if elapsed > 0 else '\u2013'
     _prev = {'rx': rx, 'tx': tx, 'time': now}
     
     return jsonify({
