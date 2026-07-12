@@ -8,7 +8,7 @@ _speedtest_running = False
 _speedtest_result = None
 _host_iface = None
 
-HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'speedtest_history.json')
+HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'speedtest_history.json')
 _speedtest_history = []
 
 def load_history():
@@ -167,17 +167,15 @@ def get_host_network_info():
     try:
         iw_out = run(['iw', 'dev', iface, 'link'])
         if iw_out:
-            # Look for standard indicators (HE, VHT, HT, 802.11ax, 802.11ac, etc.)
-            if 'HE-' in iw_out or 'HE MCS' in iw_out:
+            # Look for standard indicators (EHT, HE, VHT, HT)
+            if 'EHT' in iw_out:
+                info['wifi_standard'] = '802.11be (WiFi 7)'
+            elif 'HE-' in iw_out or 'HE MCS' in iw_out:
                 info['wifi_standard'] = '802.11ax (WiFi 6)'
             elif 'VHT' in iw_out:
                 info['wifi_standard'] = '802.11ac (WiFi 5)'
             elif 'HT' in iw_out:
                 info['wifi_standard'] = '802.11n (WiFi 4)'
-            elif '802.11a' in iw_out:
-                info['wifi_standard'] = '802.11a'
-            elif '802.11b' in iw_out or '802.11g' in iw_out:
-                info['wifi_standard'] = '802.11b/g'
             
             # Extract frequency (in MHz) to determine band
             freq_match = re.search(r'freq:\s+([\d.]+)', iw_out)
