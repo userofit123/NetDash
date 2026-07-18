@@ -83,6 +83,7 @@
   .st-section .tip-icon { top:8px; right:10px; }
   .st-label { font-family:'JetBrains Mono',monospace; font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--subtext); margin-bottom:4px; }
   .st-desc { font-size:0.85rem; color:var(--subtext); }
+  .st-server { font-size:0.72rem; color:var(--accent); margin-top:6px; font-family:'JetBrains Mono',monospace; }
   .st-row { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:12px; }
   .st-btn { display:inline-flex; align-items:center; gap:7px; padding:9px 18px; background:var(--accent); border:none; border-radius:var(--radius); color:#000; font-family:'Space Grotesk',sans-serif; font-size:0.82rem; font-weight:600; cursor:pointer; white-space:nowrap; transition:opacity 0.15s; }
   .st-btn:hover { opacity:0.85; }
@@ -236,6 +237,7 @@
     <div class="st-label">Speed Test</div>
     <div class="st-desc">Measure maximum throughput to the nearest server</div>
   </div>
+  <div class="st-server" id="stServer" style="display:none">Server: –</div>
   <div class="st-row">
     <span class="st-status" id="stStatus">Tests take ~30 seconds</span>
     <div style="display:flex;align-items:center;gap:10px">
@@ -499,6 +501,14 @@
     // Works now because page is HTTPS → protocol check passes.
     document.getElementById('stStatus').textContent = 'Finding fastest server…';
     _st.selectServer(() => {
+
+    // Show selected server
+    const sel = _st.getSelectedServer();
+    if (sel && sel.name) {
+      const srv = document.getElementById('stServer');
+      srv.textContent = 'Server: ' + sel.name;
+      srv.style.display = 'block';
+    }
 
     _st.setParameter('xhr_dlMultistream', 6);
     _st.setParameter('xhr_ulMultistream', 4);
