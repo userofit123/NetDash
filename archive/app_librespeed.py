@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, send_file, request, Response
 import re, time, socket, os, json
-import urllib.request as _urllib
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
@@ -140,16 +139,13 @@ def get_connection_type(iface):
     return 'Unknown'
 
 def check_internet():
-    # Resolve a real domain — actual DNS lookup proves connectivity
     try:
-        socket.gethostbyname('dns.google')
+        socket.gethostbyname('8.8.8.8')
         return True
     except Exception:
         pass
-    # Fallback: TCP connect to a known-reachable host
     try:
-        s = socket.create_connection(('8.8.8.8', 53), timeout=3)
-        s.close()
+        socket.gethostbyname('google.com')
         return True
     except Exception:
         pass
@@ -177,11 +173,46 @@ def get_host_network_info():
                 info['access_point'] = f"IP: {match.group(1)}"
     except Exception:
         pass
-    # ── Primary: iw dev <iface> link ── most reliable signal / rate / band / standard
+    try:
+        # Use terse mode (-t) for reliable parsing: fields are colon-separated
+        nmcli_out = run(['nmcli', '-t', '-f', 'IN-USE,SSID,BSSID,MODE,CHAN,RATE,SIGNAL,BARS,SECURITY', 'device', 'wifi', 'list'])
+        if nmcli_out:
+            for line in nmcli_out.split('\n'):
+                if line.startswith('*:') or line.startswith('*'):
+                    parts = line.split(':')
+                    # Format: IN-USE:SSID:BSSID:MODE:CHAN:RATE:SIGNAL:BARS:SECURITY
+                    if len(parts) >= 7:
+                        if parts[1]:
+                            info['ssid'] = parts[1]
+                        if len(parts) >= 6 and parts[5]:
+                            info['bit_rate'] = parts[5].strip() + ' Mbit/s'
+                        if len(parts) >= 7 and parts[6].isdigit():
+                            signal_pct = int(parts[6])
+                            info['quality_pct'] = signal_pct
+                            info['signal_dbm'] = str(int(-100 + (signal_pct * 0.7))) + ' dBm'
+                    break
+    except Exception:
+        pass
+    # Fallback: try the older (non-terse) nmcli wifi list format
+    if info['ssid'] == '\u2013':
+        try:
+            nmcli_out = run(['nmcli', 'device', 'wifi', 'list'])
+            if nmcli_out and '*' in nmcli_out:
+                for line in nmcli_out.split('\n'):
+                    if line.startswith('*'):
+                        match = re.search(r'^\*\s+(\S+)\s+(\S+)\s+(\S+)\s+(\d+)\s+([\d\s]+Mbit/s)\s+(\d+)\s+', line)
+                        if match:
+                            info['ssid'] = match.group(2)
+                            info['bit_rate'] = match.group(5).strip()
+                            signal_pct = int(match.group(6))
+                            info['quality_pct'] = signal_pct
+                            info['signal_dbm'] = str(int(-100 + (signal_pct * 0.7))) + ' dBm'
+                        break
+        except Exception:
+            pass
     try:
         iw_out = run(['iw', 'dev', iface, 'link'])
         if iw_out:
-            # WiFi standard
             if 'EHT' in iw_out:
                 info['wifi_standard'] = '802.11be (WiFi 7)'
             elif 'HE-' in iw_out or 'HE MCS' in iw_out:
@@ -190,65 +221,27 @@ def get_host_network_info():
                 info['wifi_standard'] = '802.11ac (WiFi 5)'
             elif 'HT' in iw_out:
                 info['wifi_standard'] = '802.11n (WiFi 4)'
-
-            # Band — use highest freq (handles MLO dual-link)
-            freqs = re.findall(r'freq:\s+([\d.]+)', iw_out)
-            if freqs:
-                freq = max(float(f) for f in freqs)
+            freq_match = re.search(r'freq:\s+([\d.]+)', iw_out)
+            if freq_match:
+                freq = float(freq_match.group(1))
                 if freq < 3000:
                     info['band'] = '2.4 GHz'
                 elif freq < 6000:
                     info['band'] = '5 GHz'
                 else:
                     info['band'] = '6 GHz'
-
-            # Signal strength (dBm) — real measurement from the driver
-            sig_match = re.search(r'signal:\s+([-\d]+)\s*dBm', iw_out)
-            if sig_match:
-                dbm = int(sig_match.group(1))
-                info['signal_dbm'] = f'{dbm} dBm'
-                # Convert dBm → quality %:  -30 dBm = 100%,  -90 dBm = 0%
-                info['quality_pct'] = max(0, min(100, int(2 * (dbm + 100))))
-
-            # Link rate (RX bitrate) — actual negotiated PHY rate
-            rate_match = re.search(r'rx bitrate:\s+([\d.]+)\s*MBit/s', iw_out)
-            if rate_match:
-                info['bit_rate'] = rate_match.group(1) + ' Mbit/s'
     except Exception:
         pass
-
-    # ── SSID: use nmcli wifi list (terse, without BSSID to avoid escaped-colon bug) ──
-    try:
-        nmcli_out = run(['nmcli', '-t', '-f', 'IN-USE,SSID,SIGNAL', 'device', 'wifi', 'list'])
-        if nmcli_out:
-            for line in nmcli_out.split('\n'):
-                # Terse format:  IN-USE:SSID:SIGNAL   (no BSSID = no escaped colons)
-                if line.startswith('*:'):
-                    parts = line.split(':', 2)  # split at most 2 colons: [*, SSID, SIGNAL]
-                    if len(parts) >= 2 and parts[1]:
-                        info['ssid'] = parts[1]
-                    # If we didn't get signal from iw, use nmcli's percentage
-                    if info['quality_pct'] is None and len(parts) >= 3 and parts[2].isdigit():
-                        pct = int(parts[2])
-                        info['quality_pct'] = pct
-                        info['signal_dbm'] = f'{int(-100 + (pct * 0.7))} dBm'
-                    break
-    except Exception:
-        pass
-
-    # ── Fallback: iwconfig for SSID / signal ──
-    if info['ssid'] == '\u2013' or info['signal_dbm'] == '\u2013':
+    if info['ssid'] == '\u2013':
         try:
             iwconfig_out = run(['iwconfig', iface])
-            if iwconfig_out:
-                if info['ssid'] == '\u2013' and 'ESSID' in iwconfig_out:
-                    essid_match = re.search(r'ESSID:"(.+?)"', iwconfig_out)
-                    if essid_match:
-                        info['ssid'] = essid_match.group(1)
-                if info['signal_dbm'] == '\u2013':
-                    sig_match = re.search(r'Signal level[=:](\S+)', iwconfig_out)
-                    if sig_match:
-                        info['signal_dbm'] = sig_match.group(1)
+            if iwconfig_out and 'ESSID' in iwconfig_out:
+                essid_match = re.search(r'ESSID:"(.+?)"', iwconfig_out)
+                if essid_match:
+                    info['ssid'] = essid_match.group(1)
+                signal_match = re.search(r'Signal level[=:](\S+)', iwconfig_out)
+                if signal_match:
+                    info['signal_dbm'] = signal_match.group(1)
         except Exception:
             pass
     return info, iface
@@ -272,35 +265,31 @@ def fmt_speed(bps):
 
 # ── LibreSpeed backend endpoints ─────────────────────────────────
 #
-# Browser → Flask (same origin, zero CORS).
-# Download is proxied from an external CDN so the browser measures
-# real internet speed, not localhost loopback.
+# These are the only three endpoints LibreSpeed's JS worker needs.
+# Drop speedtest.js + speedtest_worker.js into your static/ folder
+# and call `startSpeedtest()` from your frontend JS — that's it.
+
+# 20 MB chunk of random-ish bytes, generated once at startup
+_GARBAGE_CHUNK = os.urandom(1024 * 1024 * 20)  # 20 MB
 
 @app.route('/backend/garbage')
 def garbage():
-    """Proxy a real internet download so the browser measures WAN speed."""
-    ck_size = int(request.args.get('ckSize', 20))  # MB
-    total = ck_size * 1024 * 1024
-
+    """
+    Download test endpoint.
+    LibreSpeed opens several parallel GET requests here and measures
+    how fast the bytes arrive — no single-stream TCP bottleneck.
+    Cache headers are set to prevent the browser from caching results.
+    """
     def generate():
+        # Stream the chunk as many times as the worker requests it
+        # (it passes ?ckSize=N to indicate how many MB it wants)
+        ck_size = int(request.args.get('ckSize', 20))  # MB
+        total = ck_size * 1024 * 1024
         sent = 0
-        try:
-            # Fast, reliable CDN with a 100 MB test file
-            resp = _urllib.urlopen(
-                'http://speedtest.tele2.net/100MB.zip', timeout=30
-            )
-            while sent < total:
-                chunk = resp.read(65536)
-                if not chunk:
-                    break
-                yield chunk
-                sent += len(chunk)
-            resp.close()
-        except Exception:
-            while sent < total:
-                piece = min(20 * 1024 * 1024, total - sent)
-                yield os.urandom(piece)
-                sent += piece
+        while sent < total:
+            piece = min(len(_GARBAGE_CHUNK), total - sent)
+            yield _GARBAGE_CHUNK[:piece]
+            sent += piece
 
     resp = Response(generate(), mimetype='application/octet-stream')
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
@@ -310,15 +299,24 @@ def garbage():
 
 @app.route('/backend/upload', methods=['POST'])
 def upload():
-    """Upload test — browser POSTs blobs, we discard and report size."""
+    """
+    Upload test endpoint.
+    The browser POSTs blobs of random data here; we just discard them
+    and return how many bytes were received (for verification).
+    """
     size = request.content_length or 0
+    # Read and discard — we only care about throughput, not content
     request.stream.read()
     return jsonify({'received': size})
 
 
 @app.route('/backend/ping')
 def ping():
-    """Latency test — tiny response, measured by browser."""
+    """
+    Ping / latency test endpoint.
+    LibreSpeed fires rapid requests here and measures round-trip time.
+    The response must be tiny and fast.
+    """
     resp = Response('pong', mimetype='text/plain')
     resp.headers['Cache-Control'] = 'no-store'
     return resp
@@ -326,7 +324,7 @@ def ping():
 
 @app.route('/backend/getIp')
 def get_ip():
-    """Returns client IP for UI display."""
+    """Optional: returns the client's IP for display in the UI."""
     return jsonify({'processedString': request.remote_addr, 'rawIspInfo': ''})
 
 
@@ -334,7 +332,10 @@ def get_ip():
 
 @app.route('/api/speedtest/history/save', methods=['POST'])
 def save_result():
-    """Frontend calls this after a test completes to persist the result."""
+    """
+    The frontend calls this after a test completes, sending the
+    LibreSpeed result object so we can persist it.
+    """
     global _speedtest_history
     data = request.get_json(silent=True) or {}
     entry = {
@@ -358,37 +359,6 @@ def save_result():
 @app.route('/api/speedtest/history')
 def speedtest_history():
     return jsonify(_speedtest_history)
-
-
-@app.route('/api/speedtest/history/<int:index>', methods=['DELETE'])
-def delete_history_entry(index):
-    global _speedtest_history
-    if 0 <= index < len(_speedtest_history):
-        _speedtest_history.pop(index)
-        try:
-            with open(HISTORY_FILE, 'w') as f:
-                json.dump(_speedtest_history, f, indent=2)
-        except Exception:
-            pass
-        return jsonify({'status': 'deleted'})
-    return jsonify({'status': 'not found'}), 404
-
-
-import urllib.request
-
-
-# ── Proxy the LibreSpeed server list (browser can't fetch cross-origin) ──
-
-@app.route('/api/librespeed-servers')
-def librespeed_servers():
-    """Return the community server list — fetched server-side to avoid CORS."""
-    try:
-        resp = urllib.request.urlopen(
-            'https://librespeed.org/backend-servers/servers.json', timeout=10
-        )
-        return Response(resp.read(), mimetype='application/json')
-    except Exception:
-        return jsonify([])
 
 
 # ── Live network stats (unchanged) ───────────────────────────────
@@ -425,12 +395,6 @@ def stats():
 @app.route('/')
 def index():
     return send_file('index.html')
-
-
-# LibreSpeed loads the worker from "/speedtest_worker.js" (hardcoded in speedtest.js)
-@app.route('/speedtest_worker.js')
-def serve_worker():
-    return send_file('static/speedtest_worker.js')
 
 
 if __name__ == '__main__':

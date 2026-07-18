@@ -1,0 +1,7 @@
+localhost {
+  reverse_proxy netdash:5000
+}
+
+https://localhost {
+  reverse_proxy netdash:5000
+}

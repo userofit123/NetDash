@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="globeBg" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0a0f1a"/>
+    </radialGradient>
+    <linearGradient id="globeStroke" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#4ade80"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>
+
+  <!-- App background -->
+  <rect width="512" height="512" rx="96" fill="#090c10"/>
+  <rect x="8" y="8" width="496" height="496" rx="88" fill="none" stroke="#1c2230" stroke-width="3"/>
+
+  <!-- Subtle background grid -->
+  <g opacity="0.06" stroke="#38bdf8" stroke-width="0.5">
+    <line x1="0" y1="128" x2="512" y2="128"/>
+    <line x1="0" y1="256" x2="512" y2="256"/>
+    <line x1="0" y1="384" x2="512" y2="384"/>
+    <line x1="128" y1="0" x2="128" y2="512"/>
+    <line x1="256" y1="0" x2="256" y2="512"/>
+    <line x1="384" y1="0" x2="384" y2="512"/>
+  </g>
+
+  <!-- Orbital ring (behind globe) -->
+  <ellipse cx="256" cy="280" rx="220" ry="60" fill="none" stroke="url(#ringGrad)" stroke-width="2" opacity="0.3"
+    transform="rotate(-15 256 280)"/>
+
+  <!-- GLOBE -->
+  <g transform="translate(256,236)">
+    <!-- Globe sphere -->
+    <circle cx="0" cy="0" r="130" fill="url(#globeBg)"/>
+
+    <!-- Globe outline -->
+    <circle cx="0" cy="0" r="130" fill="none" stroke="url(#globeStroke)" stroke-width="3" filter="url(#glow)"/>
+
+    <!-- Latitude lines -->
+    <ellipse cx="0" cy="0" rx="130" ry="34" fill="none" stroke="#38bdf8" stroke-width="1.2" opacity="0.3"/>
+    <ellipse cx="0" cy="0" rx="130" ry="68" fill="none" stroke="#38bdf8" stroke-width="1" opacity="0.2"/>
+    <ellipse cx="0" cy="0" rx="130" ry="100" fill="none" stroke="#38bdf8" stroke-width="0.8" opacity="0.15"/>
+
+    <!-- Longitude center line -->
+    <ellipse cx="0" cy="0" rx="34" ry="130" fill="none" stroke="#38bdf8" stroke-width="1.2" opacity="0.3"/>
+    <ellipse cx="0" cy="0" rx="68" ry="130" fill="none" stroke="#38bdf8" stroke-width="1" opacity="0.2"/>
+    <ellipse cx="0" cy="0" rx="100" ry="130" fill="none" stroke="#38bdf8" stroke-width="0.8" opacity="0.15"/>
+
+    <!-- Network nodes on the globe (at grid intersections) -->
+    <!-- Top row -->
+    <circle cx="-70" cy="-85" r="6" fill="#4ade80" opacity="0.9" filter="url(#glow)"/>
+    <circle cx="-70" cy="-85" r="3" fill="#bbf7d0"/>
+
+    <circle cx="0" cy="-94" r="6" fill="#38bdf8" opacity="0.9" filter="url(#glow)"/>
+    <circle cx="0" cy="-94" r="3" fill="#bae6fd"/>
+
+    <circle cx="70" cy="-85" r="6" fill="#fbbf24" opacity="0.9" filter="url(#glow)"/>
+    <circle cx="70" cy="-85" r="3" fill="#fde68a"/>
+
+    <!-- Mid row -->
+    <circle cx="-100" cy="-30" r="5" fill="#38bdf8" opacity="0.8" filter="url(#glow)"/>
+    <circle cx="-100" cy="-30" r="2.5" fill="#bae6fd"/>
+
+    <circle cx="100" cy="-30" r="5" fill="#4ade80" opacity="0.8" filter="url(#glow)"/>
+    <circle cx="100" cy="-30" r="2.5" fill="#bbf7d0"/>
+
+    <!-- Lower row -->
+    <circle cx="-80" cy="40" r="5" fill="#fbbf24" opacity="0.7" filter="url(#glow)"/>
+    <circle cx="-80" cy="40" r="2.5" fill="#fde68a"/>
+
+    <circle cx="80" cy="40" r="5" fill="#38bdf8" opacity="0.7" filter="url(#glow)"/>
+    <circle cx="80" cy="40" r="2.5" fill="#bae6fd"/>
+
+    <!-- Connection lines between nodes -->
+    <g stroke="#38bdf8" stroke-width="1" opacity="0.25">
+      <line x1="-70" y1="-85" x2="0" y2="-94"/>
+      <line x1="0" y1="-94" x2="70" y2="-85"/>
+      <line x1="-70" y1="-85" x2="-100" y2="-30"/>
+      <line x1="70" y1="-85" x2="100" y2="-30"/>
+      <line x1="-100" y1="-30" x2="-80" y2="40"/>
+      <line x1="100" y1="-30" x2="80" y2="40"/>
+      <line x1="0" y1="-94" x2="-80" y2="40"/>
+      <line x1="0" y1="-94" x2="80" y2="40"/>
+    </g>
+
+    <!-- Center hub (your position on the network) -->
+    <circle cx="0" cy="0" r="16" fill="#090c10" stroke="url(#globeStroke)" stroke-width="2.5"/>
+    <circle cx="0" cy="0" r="7" fill="#38bdf8"/>
+    <circle cx="0" cy="-2" r="3" fill="#bae6fd" opacity="0.6"/>
+  </g>
+
+  <!-- Data activity arcs -->
+  <!-- Outer arc - download -->
+  <path d="M 100 390 A 160 160 0 0 1 412 390" fill="none" stroke="#1c2230" stroke-width="16" stroke-linecap="round"/>
+  <path d="M 100 390 A 160 160 0 0 1 340 310" fill="none" stroke="#4ade80" stroke-width="14" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- Inner arc - upload -->
+  <path d="M 140 400 A 120 120 0 0 1 372 400" fill="none" stroke="#1c2230" stroke-width="12" stroke-linecap="round"/>
+  <path d="M 140 400 A 120 120 0 0 1 290 340" fill="none" stroke="#fbbf24" stroke-width="10" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- Speed labels -->
+  <g font-family="'JetBrains Mono',monospace" font-size="13" font-weight="600">
+    <text x="75" y="408" fill="#4ade80" text-anchor="start">DL</text>
+    <text x="437" y="408" fill="#fbbf24" text-anchor="end">UL</text>
+  </g>
+
+  <!-- Connected status indicator (top-right) -->
+  <g transform="translate(430,58)">
+    <circle cx="0" cy="0" r="14" fill="#0e1219" stroke="#4ade80" stroke-width="2"/>
+    <circle cx="0" cy="0" r="7" fill="#4ade80"/>
+    <circle cx="0" cy="-2" r="3" fill="#bbf7d0">
+      <animate attributeName="opacity" values="0.7;0.15;0.7" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Signal waves (top-left) -->
+  <g transform="translate(66,58)" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" opacity="0.6">
+    <path d="M -20 0 A 8 8 0 0 1 -12 8"/>
+    <path d="M -28 0 A 16 16 0 0 1 -20 16" opacity="0.7"/>
+    <path d="M -36 0 A 24 24 0 0 1 -28 24" opacity="0.5"/>
+  </g>
+</svg>

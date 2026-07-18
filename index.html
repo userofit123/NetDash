@@ -4,8 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Network</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png">
+<link rel="shortcut icon" href="/static/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="/static/speedtest.js"></script>
 <style>
   :root {
     --bg:       #090c10;
@@ -43,19 +47,10 @@
   .badge.off { background:rgba(248,113,113,0.12); border:1px solid rgba(248,113,113,0.25); color:var(--red); }
   .badge-dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; animation:pulse 2s infinite; }
   .badge.off .badge-dot { animation:none; }
+  .badge.wifi { background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.25); color:var(--accent); }
+  .badge.eth  { background:rgba(148,163,184,0.12); border:1px solid rgba(148,163,184,0.25); color:#94a3b8; }
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
-  .chips { display:flex; gap:5px; flex-wrap:wrap; }
-  .chip { font-family:'JetBrains Mono',monospace; font-size:0.68rem; padding:3px 8px; background:var(--surface); border:1px solid var(--border); border-radius:4px; color:var(--subtext); white-space:nowrap; }
-  .chip.highlight { color:var(--accent); border-color:rgba(56,189,248,0.2); }
-  .chip.empty { color:var(--muted); border-style:dashed; border-color:var(--muted); }
 
-  /* ---- Chip tooltips ---- */
-  .chip.has-tip { position:relative; padding-right:20px; }
-  .chip .tip-icon-inline { position:absolute; right:5px; top:50%; transform:translateY(-50%); width:12px; height:12px; border-radius:50%; border:1px solid var(--muted); color:var(--muted); font-size:7px; font-weight:700; font-family:'JetBrains Mono',monospace; display:inline-flex; align-items:center; justify-content:center; line-height:1; opacity:0; transition:opacity 0.15s; }
-  .chip.has-tip:hover .tip-icon-inline { opacity:1; }
-  .chip .tip-text { right:0; top:100%; margin-top:4px; min-width:200px; max-width:280px; overflow-wrap:break-word; word-break:break-word; white-space:normal; }
-  .chip .tip-icon-inline:hover + .tip-text { visibility:visible; opacity:1; }
-  .chip .tip-icon-inline:hover { border-color:var(--accent); color:var(--accent); }
   .timestamp { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--subtext); white-space:nowrap; }
 
   /* ---- Gauges row ---- */
@@ -75,7 +70,7 @@
   .gauge-svg .na { stroke:var(--muted); }
 
   /* ---- Info strip ---- */
-  .strip { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 0; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); margin-bottom:12px; }
+  .strip { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 0; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); margin-bottom:12px; }
   .strip-item { padding:0 18px; border-right:1px solid var(--border); position:relative; }
   .strip-item:last-child { border-right:none; }
   .strip-label { font-family:'JetBrains Mono',monospace; font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--subtext); margin-bottom:5px; }
@@ -92,6 +87,10 @@
   .st-btn { display:inline-flex; align-items:center; gap:7px; padding:9px 18px; background:var(--accent); border:none; border-radius:var(--radius); color:#000; font-family:'Space Grotesk',sans-serif; font-size:0.82rem; font-weight:600; cursor:pointer; white-space:nowrap; transition:opacity 0.15s; }
   .st-btn:hover { opacity:0.85; }
   .st-btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .st-auto { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); color:var(--subtext); font-family:'Space Grotesk',sans-serif; font-size:0.78rem; padding:8px 10px; cursor:pointer; transition:border-color 0.15s, color 0.15s; outline:none; }
+  .st-auto:hover { border-color:var(--accent); color:var(--text); }
+  .st-auto:focus { border-color:var(--accent); }
+  .st-auto.running { color:var(--accent); border-color:rgba(56,189,248,0.3); }
   .st-btn svg { width:14px; height:14px; }
   .st-status { font-size:0.78rem; color:var(--subtext); }
   .st-results { margin-top:16px; }
@@ -119,6 +118,12 @@
   .hist-tag { display:inline-block; font-size:0.62rem; padding:2px 6px; border-radius:4px; background:var(--bg); border:1px solid var(--border); color:var(--subtext); margin:2px 3px 0 0; }
   .hist-tag.name { color:var(--accent); border-color:rgba(56,189,248,0.2); }
 
+  .hist-del { position:absolute; right:10px; top:50%; transform:translateY(-50%); width:26px; height:26px; border-radius:6px; border:1px solid transparent; background:none; color:var(--muted); font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.15s, color 0.15s, border-color 0.15s; }
+  .hist-table tbody tr:hover .hist-del { opacity:1; }
+  .hist-del:hover { color:var(--red); border-color:rgba(248,113,113,0.3); background:rgba(248,113,113,0.08); }
+
+  /* make room for delete button on the rightmost column */
+
   /* ---- Interval controls ---- */
   .interval-group { display:flex; background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
   .interval-btn { background:none; border:none; color:var(--subtext); font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:500; padding:5px 10px; cursor:pointer; transition:all 0.15s; border-right:1px solid var(--border); }
@@ -138,15 +143,9 @@
     <span class="logo"><span>//</span>NETWORK DIAGNOSTICS</span>
     <span class="badge on has-tip" id="hdr-badge">
       <span class="badge-dot"></span>Connected
-      <span class="tip-text"><strong>Internet connectivity</strong>Checked via DNS resolution (8.8.8.8). Green = reachable, Red = no DNS response – your local network may still work even if the internet is unreachable.</span>
+      <span class="tip-text"><strong>Internet connectivity</strong>Checked via DNS resolution. Green = reachable, Red = no DNS response – your local network may still work even if the internet is unreachable.</span>
     </span>
-  </div>
-  <div class="chips has-tip" id="hdr-chips">
-    <span class="chip" id="chip-iface">–</span>
-    <span class="chip highlight" id="chip-ssid">–</span>
-    <span class="chip" id="chip-standard">–</span>
-    <span class="chip" id="chip-band">–</span>
-    <span class="tip-text"><strong>Connection summary</strong>Interface name, WiFi network name (SSID), wireless protocol version, and radio frequency band. <em>On Ethernet, SSID, standard, and band will show – as they do not apply.</em></span>
+    <span class="badge on" id="hdr-conn">–</span>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
     <div class="interval-group">
@@ -199,21 +198,27 @@
 <div class="strip" id="info-strip">
   <div class="strip-item has-tip">
     <span class="tip-icon">?</span>
-    <span class="tip-text"><strong>Frequency band</strong>The radio frequency used by your WiFi connection. 2.4 GHz = longer range, lower speed, more interference. 5 GHz = shorter range, faster speeds. 6 GHz = WiFi 6E, very fast but limited range. <em>On Ethernet, this is not applicable.</em></span>
+    <span class="tip-text"><strong>WiFi network name (SSID)</strong>The name broadcast by your WiFi access point or router. Used to identify which network you are connected to. <em>Not applicable on Ethernet.</em></span>
+    <div class="strip-label">Network</div>
+    <div class="strip-val" id="strip-ssid">–</div>
+  </div>
+  <div class="strip-item has-tip">
+    <span class="tip-icon">?</span>
+    <span class="tip-text"><strong>WiFi protocol version</strong>The IEEE 802.11 wireless standard in use (e.g. WiFi 7 = 802.11be, WiFi 6 = 802.11ax). Determines maximum theoretical speed and supported features. <em>Not applicable on Ethernet.</em></span>
+    <div class="strip-label">Standard</div>
+    <div class="strip-val" id="strip-standard">–</div>
+  </div>
+  <div class="strip-item has-tip">
+    <span class="tip-icon">?</span>
+    <span class="tip-text"><strong>Frequency band</strong>The radio frequency used by your WiFi connection. 2.4 GHz = longer range, more penetration, slower speeds. 5 GHz = shorter range, faster speeds. 6 GHz = WiFi 6E. <em>Not applicable on Ethernet.</em></span>
     <div class="strip-label">Band</div>
     <div class="strip-val" id="strip-band">–</div>
   </div>
   <div class="strip-item has-tip">
     <span class="tip-icon">?</span>
-    <span class="tip-text"><strong>Link rate</strong>The negotiated data rate between your device and the access point (e.g. 866 Mbit/s). This is the <em>theoretical maximum</em> for the current WiFi link – actual throughput is always lower due to overhead, interference, and distance. <em>Not applicable on Ethernet.</em></span>
+    <span class="tip-text"><strong>Link rate</strong>The negotiated data rate between your device and the access point. This is the <em>theoretical maximum</em> for the current WiFi link – actual throughput is always lower. <em>Not applicable on Ethernet.</em></span>
     <div class="strip-label">Link Rate</div>
     <div class="strip-val" id="strip-rate">–</div>
-  </div>
-  <div class="strip-item has-tip">
-    <span class="tip-icon">?</span>
-    <span class="tip-text"><strong>Signal level</strong>WiFi signal strength in dBm. Higher (closer to 0) is better: –30 to –50 dBm is excellent, –50 to –60 is good, –60 to –70 is fair, below –70 is weak and may cause dropouts. <em>Not applicable on Ethernet.</em></span>
-    <div class="strip-label">Signal</div>
-    <div class="strip-val" id="strip-signal">–</div>
   </div>
   <div class="strip-item has-tip">
     <span class="tip-icon">?</span>
@@ -226,18 +231,28 @@
 <!-- === SPEEDTEST === -->
 <div class="st-section has-tip">
   <span class="tip-icon">?</span>
-  <span class="tip-text"><strong>Internet speed test</strong>Runs <code>speedtest-cli</code> to measure maximum throughput to a remote server. Downloads and uploads test data, then reports ping latency (lower is better), download speed (how fast you can receive data), and upload speed (how fast you can send data). Results are saved to history.</span>
+  <span class="tip-text"><strong>Internet speed test</strong>Measures throughput via LibreSpeed open-source test servers using parallel browser streams. Downloads and uploads test data, then reports ping latency, download speed, and upload speed. Results are saved to history.</span>
   <div class="st-label-row">
     <div class="st-label">Speed Test</div>
     <div class="st-desc">Measure maximum throughput to the nearest server</div>
   </div>
   <div class="st-row">
     <span class="st-status" id="stStatus">Tests take ~30 seconds</span>
-    <button class="st-btn" id="stBtn">
+    <div style="display:flex;align-items:center;gap:10px">
+      <select class="st-auto" id="stAuto">
+        <option value="0">Auto: Off</option>
+        <option value="5">Every 5 min</option>
+        <option value="10">Every 10 min</option>
+        <option value="30">Every 30 min</option>
+        <option value="60">Every hour</option>
+        <option value="120">Every 2 hours</option>
+      </select>
+      <button class="st-btn" id="stBtn">
       <svg class="st-icon-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21"/></svg>
       <svg class="st-icon-run" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polyline points="1 12 5 12 8 4 11 20 14 8 17 12 23 12"/></svg>
       Run Speedtest
     </button>
+    </div>
   </div>
   <div class="st-results" id="stResults" style="display:none">
     <div class="st-grid">
@@ -260,7 +275,7 @@
 
 <script>
   const ARC_LEN = 163;
-  let intervalId=null, stPollId=null, stRunning=false;
+  let intervalId=null;
   let speedtestDlCap=null, speedtestUlCap=null;
 
   function parseSpeed(s){
@@ -290,32 +305,23 @@
       // Normalize old em-dash values from API
       for(const k in d){ if(d[k]==='\u2014') d[k]='\u2013'; }
       const isWifi = d.conn_type && d.conn_type.toLowerCase().startsWith('wifi');
-      const ifaceName = d.conn_type ? d.conn_type.replace(/^(.+?)\s*\(.+\)$/,'$1').split(' ').pop() : '–';
 
-      // Header badge
+      // Header badges — internet status + connection type
       const badge=document.getElementById('hdr-badge');
-      if(d.internet){ badge.className='badge on has-tip'; badge.innerHTML='<span class="badge-dot"></span>Connected<span class="tip-text"><strong>Internet connectivity</strong>Checked via DNS resolution (8.8.8.8). Green = reachable, Red = no DNS response – your local network may still work even if the internet is unreachable.</span>'; }
-      else { badge.className='badge off has-tip'; badge.innerHTML='<span class="badge-dot"></span>No Internet<span class="tip-text"><strong>Internet connectivity</strong>Checked via DNS resolution (8.8.8.8). Green = reachable, Red = no DNS response – your local network may still work even if the internet is unreachable.</span>'; }
+      if(d.internet){ badge.className='badge on has-tip'; badge.innerHTML='<span class="badge-dot"></span>Connected<span class="tip-text"><strong>Internet connectivity</strong>Checked via DNS resolution. Green = reachable, Red = no DNS response – your local network may still work even if the internet is unreachable.</span>'; }
+      else { badge.className='badge off has-tip'; badge.innerHTML='<span class="badge-dot"></span>No Internet<span class="tip-text"><strong>Internet connectivity</strong>Checked via DNS resolution. Green = reachable, Red = no DNS response – your local network may still work even if the internet is unreachable.</span>'; }
 
-      // Header chips – always show, mark WiFi-only as empty on Ethernet
-      const chipIf = document.getElementById('chip-iface');
-      chipIf.innerHTML = (ifaceName||'\u2013')+'<span class="tip-icon-inline">?</span><span class="tip-text"><strong>Network interface</strong>The name of the network adapter (e.g. wlo1 for WiFi, eth0 for Ethernet).</span>';
-      chipIf.className = 'chip has-tip';
-
-      const chipSs = document.getElementById('chip-ssid');
-      const ssidOk = isWifi && d.ssid && d.ssid!=='\u2013';
-      chipSs.innerHTML = (ssidOk?d.ssid:'\u2013')+'<span class="tip-icon-inline">?</span><span class="tip-text"><strong>WiFi network name (SSID)</strong>The name broadcast by your WiFi access point or router. Used to identify which network you are connected to.'+(!ssidOk?' <em>Not applicable on Ethernet.</em>':'')+'</span>';
-      chipSs.className = ssidOk ? 'chip highlight has-tip' : 'chip highlight empty has-tip';
-
-      const chipSt = document.getElementById('chip-standard');
-      const stdOk = isWifi && d.wifi_standard && d.wifi_standard!=='\u2013';
-      chipSt.innerHTML = (stdOk?d.wifi_standard:'\u2013')+'<span class="tip-icon-inline">?</span><span class="tip-text"><strong>WiFi protocol version</strong>The IEEE 802.11 wireless standard in use (e.g. WiFi 6 = 802.11ax, WiFi 5 = 802.11ac, WiFi 4 = 802.11n). Determines maximum theoretical speed and supported features like MIMO and beamforming.'+(!stdOk?' <em>Not applicable on Ethernet.</em>':'')+'</span>';
-      chipSt.className = stdOk ? 'chip has-tip' : 'chip empty has-tip';
-
-      const chipBa = document.getElementById('chip-band');
-      const bandOk = isWifi && d.band && d.band!=='\u2013';
-      chipBa.innerHTML = (bandOk?d.band:'\u2013')+'<span class="tip-icon-inline">?</span><span class="tip-text"><strong>Radio frequency band</strong>The frequency range used for WiFi communication. 2.4 GHz = longer range, more penetration, slower speeds. 5 GHz = shorter range, faster speeds, less interference. 6 GHz = WiFi 6E, very fast with minimal congestion.'+(!bandOk?' <em>Not applicable on Ethernet.</em>':'')+'</span>';
-      chipBa.className = bandOk ? 'chip has-tip' : 'chip empty has-tip';
+      const connBadge = document.getElementById('hdr-conn');
+      if (isWifi) {
+        connBadge.className = 'badge wifi';
+        connBadge.textContent = 'WiFi';
+      } else if (d.conn_type && d.conn_type.toLowerCase().includes('ethernet')) {
+        connBadge.className = 'badge eth';
+        connBadge.textContent = 'Ethernet';
+      } else {
+        connBadge.className = 'badge off';
+        connBadge.textContent = '–';
+      }
 
       // Download gauge
       const dlBps=parseSpeed(d.download);
@@ -340,7 +346,7 @@
         sigArc.className.baseVal = 'fill-arc sig';
         if(d.quality_pct!==null){
           setGauge('gauge-sig-arc', d.quality_pct);
-          sigVal.textContent = d.signal_dbm+' dBm';
+          sigVal.textContent = d.signal_dbm;
           sigSub.textContent = signalLabel(d.signal_dbm);
           sigSub.style.color = qualityColor(d.quality_pct);
           setValDim('val-signal', false);
@@ -374,9 +380,10 @@
           setStripDim(id, !ok);
         }
       }
+      stripField('strip-ssid', d.ssid, isWifi, '–');
+      stripField('strip-standard', d.wifi_standard, isWifi, '–');
       stripField('strip-band', d.band, isWifi, '–');
       stripField('strip-rate', d.bit_rate, isWifi, '–');
-      stripField('strip-signal', d.signal_dbm+' dBm', isWifi, '–');
       stripField('strip-ap', d.access_point ? d.access_point.replace('IP: ','') : '–', true, '–');
 
       document.getElementById('timestamp').textContent = d.timestamp;
@@ -399,44 +406,179 @@
     });
   });
 
-  // ---- Speedtest ----
-  function pollSpeedtest(){
-    stPollId=setInterval(async()=>{
-      const d=await (await fetch('/api/speedtest/result')).json();
-      if(!d.running && d.result){
-        clearInterval(stPollId);
-        const btn=document.getElementById('stBtn');
-        btn.disabled=false; btn.classList.remove('spinning');
-        btn.querySelector('.st-icon-play').style.display='inline';
-        btn.querySelector('.st-icon-run').style.display='none';
-        if(d.result.error){
-          document.getElementById('stStatus').textContent='Error: '+d.result.error;
-        }else{
-          document.getElementById('stStatus').textContent='Last test: '+d.result.timestamp;
-          document.getElementById('st-ping').textContent=d.result.ping;
-          document.getElementById('st-dl').textContent=d.result.download;
-          document.getElementById('st-ul').textContent=d.result.upload;
-          document.getElementById('stResults').style.display='block';
-          const dlM=parseFloat(d.result.download);
-          const ulM=parseFloat(d.result.upload);
-          if(dlM) speedtestDlCap=dlM*1_000_000;
-          if(ulM) speedtestUlCap=ulM*1_000_000;
-          fetchHistory();
-        }
-      }
-    },2000);
+  // ---- Speedtest (LibreSpeed) ----
+  let _st = null;
+  let _autoTimer = null;
+  let _autoMinutes = 0;
+  let _countdownTimer = null;
+
+  function updateAutoStatus() {
+    const st = document.getElementById('stStatus');
+    if (!_autoMinutes) { st.textContent = 'Tests take ~30 seconds'; return; }
+    const elapsed = Date.now() - (_lastTestEnd || Date.now());
+    const interval = _autoMinutes * 60 * 1000;
+    const remaining = Math.max(0, interval - elapsed);
+    if (remaining <= 0) { st.textContent = 'Starting next test…'; return; }
+    const m = Math.floor(remaining / 60000);
+    const s = Math.floor((remaining % 60000) / 1000);
+    st.textContent = `Next test in ${m}m ${String(s).padStart(2,'0')}s`;
   }
 
-  document.getElementById('stBtn').addEventListener('click',async()=>{
-    const btn=document.getElementById('stBtn');
-    btn.disabled=true; btn.classList.add('spinning');
-    stRunning=true;
-    document.getElementById('stStatus').textContent='Running speedtest… this takes ~30 seconds';
-    btn.querySelector('.st-icon-play').style.display='none';
-    btn.querySelector('.st-icon-run').style.display='inline';
-    await fetch('/api/speedtest/run', {method:'POST'});
-    pollSpeedtest();
+  function setAutoTest(minutes) {
+    if (_autoTimer) { clearInterval(_autoTimer); _autoTimer = null; }
+    if (_countdownTimer) { clearInterval(_countdownTimer); _countdownTimer = null; }
+    const sel = document.getElementById('stAuto');
+    sel.classList.remove('running');
+    _autoMinutes = 0;
+
+    if (!minutes || minutes <= 0) {
+      document.getElementById('stStatus').textContent = 'Tests take ~30 seconds';
+      return;
+    }
+
+    _autoMinutes = minutes;
+    const ms = minutes * 60 * 1000;
+    sel.classList.add('running');
+    _autoTimer = setInterval(() => {
+      if (!_st) startSpeedtest();
+    }, ms);
+    if (!_st) startSpeedtest();
+  }
+
+  document.getElementById('stAuto').addEventListener('change', function() {
+    setAutoTest(parseInt(this.value));
   });
+
+  async function startSpeedtest() {
+    if (_st) return;
+
+    _st = new Speedtest();
+
+    const btn = document.getElementById('stBtn');
+    btn.disabled = true;
+    btn.classList.add('spinning');
+    btn.querySelector('.st-icon-play').style.display = 'none';
+    btn.querySelector('.st-icon-run').style.display = 'inline';
+    document.getElementById('st-ping').textContent = '...';
+    document.getElementById('st-dl').textContent = '...';
+    document.getElementById('st-ul').textContent = '...';
+    document.getElementById('stResults').style.display = 'block';
+    document.getElementById('stStatus').textContent = 'Fetching servers…';
+
+    // Fetch the LibreSpeed server list via our Flask proxy
+    let servers = [];
+    try {
+      const resp = await fetch('/api/librespeed-servers');
+      servers = await resp.json();
+    } catch (e) { console.error(e); }
+
+    if (servers.length === 0) {
+      document.getElementById('stStatus').textContent = 'No servers available';
+      _st = null; btn.disabled = false;
+      btn.classList.remove('spinning');
+      btn.querySelector('.st-icon-play').style.display = 'inline';
+      btn.querySelector('.st-icon-run').style.display = 'none';
+      return;
+    }
+
+    // Normalise URLs (ensure server ends with /)
+    for (const s of servers) {
+      let base = s.server;
+      if (!base.endsWith('/')) base += '/';
+      _st.addTestPoint({
+        name:    s.name,
+        server:  base,
+        dlURL:   s.dlURL,
+        ulURL:   s.ulURL,
+        pingURL: s.pingURL,
+        getIpURL: s.getIpURL
+      });
+    }
+
+    // selectServer pings all servers, picks the fastest.
+    // Works now because page is HTTPS → protocol check passes.
+    document.getElementById('stStatus').textContent = 'Finding fastest server…';
+    _st.selectServer(() => {
+
+    _st.setParameter('xhr_dlMultistream', 6);
+    _st.setParameter('xhr_ulMultistream', 4);
+    _st.setParameter('time_dl_max', 15);
+    _st.setParameter('time_ul_max', 15);
+    _st.setParameter('telemetry_level', 'disabled');
+
+    let lastData = null;
+
+    _st.onupdate = (data) => {
+      lastData = data; // save for onend
+      const phases = ['idle','download','ping','upload','complete','aborted'];
+      const phase = phases[data.testState] || '';
+      const el = document.getElementById('stStatus');
+
+      document.getElementById('stResults').style.display = 'block';
+
+      if      (phase==='download') el.textContent = 'Testing download speed…';
+      else if (phase==='upload')   el.textContent = 'Testing upload speed…';
+      else if (phase==='ping')     el.textContent = 'Measuring ping…';
+
+      if (data.dlStatus)  document.getElementById('st-dl').textContent = parseFloat(data.dlStatus).toFixed(2) + ' Mbps';
+      if (data.ulStatus)  document.getElementById('st-ul').textContent = parseFloat(data.ulStatus).toFixed(2) + ' Mbps';
+      if (data.pingStatus) document.getElementById('st-ping').textContent = parseFloat(data.pingStatus).toFixed(0) + ' ms';
+    };
+
+    _st.onend = (aborted) => {
+      const btn = document.getElementById('stBtn');
+      btn.disabled = false;
+      btn.classList.remove('spinning');
+      btn.querySelector('.st-icon-play').style.display = 'inline';
+      btn.querySelector('.st-icon-run').style.display = 'none';
+
+      if (!aborted && lastData) {
+        if (lastData.dlStatus) speedtestDlCap = parseFloat(lastData.dlStatus) * 1_000_000;
+        if (lastData.ulStatus) speedtestUlCap = parseFloat(lastData.ulStatus) * 1_000_000;
+
+        // Snapshot current network state and persist to history
+        fetch('/api/stats?_='+Date.now()).then(r => r.json()).then(netInfo => {
+          return fetch('/api/speedtest/history/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              dlStatus: lastData.dlStatus,
+              ulStatus: lastData.ulStatus,
+              ping:     lastData.pingStatus,
+              jitter:   lastData.jitterStatus,
+              network: {
+                internet:      netInfo.internet,
+                conn_type:     netInfo.conn_type,
+                ssid:          netInfo.ssid,
+                band:          netInfo.band,
+                bit_rate:      netInfo.bit_rate,
+                signal_dbm:    netInfo.signal_dbm,
+                quality_pct:   netInfo.quality_pct,
+                access_point:  netInfo.access_point,
+                wifi_standard: netInfo.wifi_standard,
+              },
+            }),
+          });
+        }).then(() => fetchHistory());
+      }
+      _st = null;
+      // Reset status: countdown if auto is on, else default label
+      if (_autoMinutes) {
+        _lastTestEnd = Date.now();
+        if (_countdownTimer) clearInterval(_countdownTimer);
+        _countdownTimer = setInterval(updateAutoStatus, 1000);
+        updateAutoStatus();
+      } else {
+        document.getElementById('stStatus').textContent = 'Tests take ~30 seconds';
+      }
+    };
+
+    document.getElementById('stStatus').textContent = 'Starting speedtest…';
+    _st.start();
+    }); // close selectServer callback
+  }
+
+  document.getElementById('stBtn').addEventListener('click', startSpeedtest);
 
   // ---- History ----
   async function fetchHistory(){
@@ -487,10 +629,24 @@
       if(net.signal_dbm&&net.signal_dbm!=='–'&&isWifiHist) tags+=`<span class="hist-tag">${esc(net.signal_dbm)}</span>`;
       if(net.bit_rate&&net.bit_rate!=='–'&&isWifiHist) tags+=`<span class="hist-tag">${esc(net.bit_rate)}</span>`;
       if(!tags) tags='<span class="hist-tag">–</span>';
-      html+=`<tr><td class="hist-num">${String(n).padStart(2,'0')}</td><td>${esc(ts)}</td><td style="color:var(--amber)">${esc(ping)}</td><td class="dl-color">${esc(dl)}</td><td class="ul-color">${esc(ul)}</td><td>${tags}</td></tr>`;
+      const realIdx = entries.length - 1 - i;  // map reversed display → actual array index
+      html+=`<tr style="position:relative"><td class="hist-num">${String(n).padStart(2,'0')}</td><td>${esc(ts)}</td><td style="color:var(--amber)">${esc(ping)}</td><td class="dl-color">${esc(dl)}</td><td class="ul-color">${esc(ul)}</td><td>${tags}<button class="hist-del" data-idx="${realIdx}" title="Delete entry">✕</button></td></tr>`;
     });
     html+='</tbody></table>';
     container.innerHTML=html;
+
+    // Attach delete handlers via event delegation
+    container.querySelectorAll('.hist-del').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.idx);
+        if (isNaN(idx)) return;
+        try {
+          const resp = await fetch(`/api/speedtest/history/${idx}`, { method: 'DELETE' });
+          if (resp.ok) fetchHistory();
+        } catch (err) { console.error(err); }
+      });
+    });
   }
 
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
