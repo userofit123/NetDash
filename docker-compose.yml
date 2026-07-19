@@ -1,0 +1,38 @@
+services:
+  netdash:
+    build: .
+    container_name: netdash
+    restart: unless-stopped
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ./data:/app/data
+
+  # Optional: enable this block if you want automatic HTTPS via Caddy.
+  # Comment out netdash.network_mode above and uncomment below:
+  #
+  # caddy:
+  #   image: caddy:alpine
+  #   container_name: netdash-caddy
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./Caddyfile:/etc/caddy/Caddyfile
+  #     - caddy_data:/data
+  #   depends_on:
+  #     - netdash
+  #
+  # netdash:
+  #   build: .
+  #   container_name: netdash
+  #   restart: unless-stopped
+  #   cap_add:
+  #     - NET_ADMIN
+  #   volumes:
+  #     - ./data:/app/data
+
+# volumes:
+#   caddy_data:

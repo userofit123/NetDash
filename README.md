@@ -57,6 +57,8 @@ docker compose up -d --build
 
 Open **http://localhost:5000**. Auto-restarts on reboot.
 
+To add HTTPS via Caddy, edit `Caddyfile` with your domain, then uncomment the Caddy service block in `docker-compose.yml`.
+
 > On Docker Desktop, `network_mode: host` runs inside a VM, so WiFi metrics (SSID, signal, band) won't appear. Live speeds and speedtest work fine. Use the direct method for full WiFi data.
 
 ## Troubleshooting

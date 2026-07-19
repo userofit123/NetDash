@@ -1,0 +1,15 @@
+# Caddyfile for NetDash
+# Replace your-domain.com with your actual domain or IP.
+# Caddy will auto-obtain a Let's Encrypt certificate for public domains.
+#
+# If you only need HTTP (local/home network), delete the second block.
+
+# --- HTTP (always works) ---
+http://your-domain.com {
+    reverse_proxy netdash:5000
+}
+
+# --- HTTPS (auto TLS, requires public domain) ---
+https://your-domain.com {
+    reverse_proxy netdash:5000
+}
