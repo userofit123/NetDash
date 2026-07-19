@@ -104,11 +104,11 @@
   .hist { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 22px 14px; position:relative; }
   .hist .tip-icon { top:8px; right:10px; }
   .hist-label { font-family:'JetBrains Mono',monospace; font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--subtext); margin-bottom:14px; }
-  .hist-table { width:100%; border-collapse:collapse; }
-  .hist-table th { font-family:'JetBrains Mono',monospace; font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--subtext); text-align:left; padding:0 0 11px; border-bottom:1px solid var(--border); font-weight:400; }
-  .hist-table td { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--text); padding:12px 0; border-bottom:1px solid var(--border); vertical-align:top; }
-  .hist-table td:first-child { padding-right:14px; }
-  .hist-table th:first-child { padding-right:14px; }
+  .hist-table { width:100%; border-collapse:collapse; margin-top: 40px; }
+  .hist-table th { font-family:'JetBrains Mono',monospace; font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--subtext); text-align:left; padding:0 0 11px 8px; border-bottom:1px solid var(--border); font-weight:400; }
+  .hist-table td { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--text); padding:12px 8px; border-bottom:1px solid var(--border); vertical-align:top; }
+  .hist-table td:first-child { padding-left:6px; padding-right:14px; }
+  .hist-table th:first-child { padding-left:6px; padding-right:14px; }
   .dl-color, td.dl-color { color:var(--green); }
   .ul-color, td.ul-color { color:var(--orange); }
   .hist-table tr:last-child td { border-bottom:none; }
@@ -123,7 +123,51 @@
   .hist-table tbody tr:hover .hist-del { opacity:1; }
   .hist-del:hover { color:var(--red); border-color:rgba(248,113,113,0.3); background:rgba(248,113,113,0.08); }
 
-  /* make room for delete button on the rightmost column */
+  /* ---- History filters ---- */
+  .hist-filters-wrap { display:flex; align-items:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .filter-sep { color:var(--border); font-size:0.7rem; user-select:none; }
+  .filter-item { display:flex; align-items:center; gap:4px; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:3px 3px 3px 8px; }
+  .filter-label { font-family:'JetBrains Mono',monospace; font-size:0.6rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--subtext); white-space:nowrap; }
+  .filter-dir { background:none; border:none; color:var(--subtext); font-family:'Space Grotesk',sans-serif; font-size:0.7rem; padding:2px 4px; cursor:pointer; outline:none; border-radius:3px; transition:color 0.15s; }
+  .filter-dir:hover { color:var(--text); }
+  .filter-dir.active { color:var(--accent); }
+  .filter-val { background:none; border:none; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:0.72rem; width:56px; padding:2px 4px; outline:none; border-radius:3px; transition:background 0.15s; }
+  .filter-val::placeholder { color:var(--muted); }
+  .filter-val:focus { background:rgba(56,189,248,0.08); }
+  /* hide number input spinners for cleaner look */
+  .filter-val::-webkit-inner-spin-button,
+  .filter-val::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+  .filter-val[type=number] { -moz-appearance:textfield; }
+  .filter-clear { background:none; border:1px solid var(--border); border-radius:6px; color:var(--subtext); font-family:'Space Grotesk',sans-serif; font-size:0.7rem; padding:5px 10px; cursor:pointer; transition:color 0.15s, border-color 0.15s; }
+  .filter-clear:hover { color:var(--text); border-color:var(--muted); }
+  .filter-clear:active { color:var(--accent); }
+  .filter-status { font-family:'JetBrains Mono',monospace; font-size:0.62rem; color:var(--subtext); white-space:nowrap; margin-left:auto; }
+  .filter-status.active { color:var(--accent); }
+
+  /* ---- Highlight rules ---- */
+  .hrule-toggle { background:none; border:1px solid var(--border); border-radius:6px; color:var(--subtext); font-family:'Space Grotesk',sans-serif; font-size:0.7rem; padding:5px 10px; cursor:pointer; white-space:nowrap; transition:color 0.15s, border-color 0.15s; }
+  .hrule-toggle:hover { color:var(--text); border-color:var(--muted); }
+  .hrule-toggle.expanded { color:var(--accent); border-color:rgba(56,189,248,0.25); }
+  .hrule-count { font-family:'JetBrains Mono',monospace; font-size:0.62rem; color:var(--subtext); display:none; white-space:nowrap; }
+  .hrule-count.visible { display:inline; }
+  .hrule-body { margin-top:8px; margin-bottom:10px; padding:10px; background:var(--bg); border:1px solid var(--border); border-radius:8px; }
+  .hrule-list { display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
+  .hrule-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .hrule-metric, .hrule-dir { background:var(--surface); border:1px solid var(--border); border-radius:5px; color:var(--text); font-family:'Space Grotesk',sans-serif; font-size:0.7rem; padding:4px 8px; outline:none; cursor:pointer; }
+  .hrule-metric:focus, .hrule-dir:focus { border-color:var(--accent); }
+  .hrule-val { background:var(--surface); border:1px solid var(--border); border-radius:5px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:0.7rem; width:70px; padding:4px 6px; outline:none; }
+  .hrule-val:focus { border-color:var(--accent); }
+  .hrule-val::placeholder { color:var(--muted); }
+  .hrule-color { -webkit-appearance:none; appearance:none; width:28px; height:28px; border:1px solid var(--border); border-radius:5px; cursor:pointer; background:none; padding:2px; }
+  .hrule-color::-webkit-color-swatch-wrapper { padding:0; }
+  .hrule-color::-webkit-color-swatch { border:none; border-radius:3px; }
+  .hrule-remove { background:none; border:1px solid transparent; border-radius:5px; color:var(--muted); font-size:0.8rem; cursor:pointer; padding:2px 6px; transition:color 0.15s, border-color 0.15s; }
+  .hrule-remove:hover { color:var(--red); border-color:rgba(248,113,113,0.3); }
+  .hrule-add { background:none; border:1px dashed var(--border); border-radius:5px; color:var(--subtext); font-family:'Space Grotesk',sans-serif; font-size:0.7rem; padding:5px 12px; cursor:pointer; width:100%; transition:color 0.15s, border-color 0.15s; }
+  .hrule-add:hover { color:var(--accent); border-color:var(--accent); }
+
+  /* ---- Highlighted rows ---- */
+  .hist-table tbody tr.hl-row:hover { filter:brightness(1.08); }
 
   /* ---- Interval controls ---- */
   .interval-group { display:flex; background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
@@ -270,6 +314,49 @@
   <span class="tip-icon">?</span>
   <span class="tip-text"><strong>Speedtest history</strong>Records every speed test you run, together with a snapshot of your network state at the time (SSID, band, signal, etc.). Each row shows the test results and the network conditions when it was taken, so you can correlate performance with connection type and signal quality. Newest tests appear first.</span>
   <div class="hist-label">Speedtest History</div>
+
+  <!-- Filter & highlight bar -->
+  <div class="hist-filters-wrap">
+    <button class="hrule-toggle" id="hruleToggle">Highlight Rules</button>
+    <span class="hrule-count" id="hruleCount"></span>
+    <span class="filter-sep">|</span>
+    <div class="filter-item">
+      <span class="filter-label">Ping</span>
+      <select class="filter-dir" data-key="ping">
+        <option value="">–</option>
+        <option value="over">Over</option>
+        <option value="under">Under</option>
+      </select>
+      <input type="number" class="filter-val" data-key="ping" placeholder="ms" min="0" step="1">
+    </div>
+    <div class="filter-item">
+      <span class="filter-label">Download</span>
+      <select class="filter-dir" data-key="download">
+        <option value="">–</option>
+        <option value="over">Over</option>
+        <option value="under">Under</option>
+      </select>
+      <input type="number" class="filter-val" data-key="download" placeholder="Mbps" min="0" step="1">
+    </div>
+    <div class="filter-item">
+      <span class="filter-label">Upload</span>
+      <select class="filter-dir" data-key="upload">
+        <option value="">–</option>
+        <option value="over">Over</option>
+        <option value="under">Under</option>
+      </select>
+      <input type="number" class="filter-val" data-key="upload" placeholder="Mbps" min="0" step="1">
+    </div>
+    <button class="filter-clear" id="filterClear" title="Clear all filters">Clear</button>
+    <span class="filter-status" id="filterStatus"></span>
+  </div>
+
+  <!-- Highlight rules body -->
+  <div class="hrule-body" id="hruleBody" style="display:none">
+    <div class="hrule-list" id="hruleList"></div>
+    <button class="hrule-add" id="hruleAdd">+ Add Rule</button>
+  </div>
+
   <div id="history-container">
     <div class="loading">Loading history…</div>
   </div>
@@ -413,6 +500,9 @@
   let _autoTimer = null;
   let _autoMinutes = 0;
   let _countdownTimer = null;
+  let _resumeTimeout = null;
+  let _lastTestEnd = null;
+  let _settings = {};  // loaded from /api/settings on init
 
   function updateAutoStatus() {
     const st = document.getElementById('stStatus');
@@ -421,30 +511,60 @@
     const interval = _autoMinutes * 60 * 1000;
     const remaining = Math.max(0, interval - elapsed);
     if (remaining <= 0) { st.textContent = 'Starting next test…'; return; }
-    const m = Math.floor(remaining / 60000);
-    const s = Math.floor((remaining % 60000) / 1000);
-    st.textContent = `Next test in ${m}m ${String(s).padStart(2,'0')}s`;
+    const totalSec = Math.floor(remaining / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    let parts = [];
+    if (h > 0) { parts.push(`${h}h`); parts.push(`${m}m`); }
+    else if (m > 0) { parts.push(`${m}m`); parts.push(`${String(s).padStart(2,'0')}s`); }
+    else { parts.push(`${s}s`); }
+    st.textContent = 'Next test in ' + parts.join(' ');
   }
 
-  function setAutoTest(minutes) {
+  function setAutoTest(minutes, remainingMs) {
+    // Clear all existing timers
     if (_autoTimer) { clearInterval(_autoTimer); _autoTimer = null; }
     if (_countdownTimer) { clearInterval(_countdownTimer); _countdownTimer = null; }
+    if (_resumeTimeout) { clearTimeout(_resumeTimeout); _resumeTimeout = null; }
     const sel = document.getElementById('stAuto');
     sel.classList.remove('running');
     _autoMinutes = 0;
+    _lastTestEnd = null;
 
     if (!minutes || minutes <= 0) {
       document.getElementById('stStatus').textContent = 'Tests take ~30 seconds';
+      delete _settings.auto_test;
+      saveSettings();
       return;
     }
 
     _autoMinutes = minutes;
-    const ms = minutes * 60 * 1000;
+    const intervalMs = minutes * 60 * 1000;
     sel.classList.add('running');
-    _autoTimer = setInterval(() => {
+
+    function startIntervalAndTest() {
+      _autoTimer = setInterval(() => {
+        if (!_st) startSpeedtest();
+      }, intervalMs);
       if (!_st) startSpeedtest();
-    }, ms);
-    if (!_st) startSpeedtest();
+    }
+
+    // If restoring with a known remaining time, schedule instead of starting now
+    if (remainingMs !== undefined && remainingMs > 1000) {
+      _lastTestEnd = Date.now() - (intervalMs - remainingMs);
+      _countdownTimer = setInterval(updateAutoStatus, 1000);
+      updateAutoStatus();
+      _resumeTimeout = setTimeout(() => {
+        _resumeTimeout = null;
+        startIntervalAndTest();
+      }, remainingMs);
+      saveAutoState();
+      return;
+    }
+
+    // Normal start: begin immediately
+    startIntervalAndTest();
   }
 
   document.getElementById('stAuto').addEventListener('change', function() {
@@ -575,6 +695,7 @@
       // Reset status: countdown if auto is on, else default label
       if (_autoMinutes) {
         _lastTestEnd = Date.now();
+        saveAutoState();
         if (_countdownTimer) clearInterval(_countdownTimer);
         _countdownTimer = setInterval(updateAutoStatus, 1000);
         updateAutoStatus();
@@ -613,6 +734,166 @@
     }
   }
 
+  // ---- History helpers ----
+  function parseMetric(s){
+    if(!s||s==='–'||s==='\u2013'||s==='\u2014') return null;
+    const m=String(s).match(/^([\d.]+)/);
+    return m ? parseFloat(m[1]) : null;
+  }
+
+  function getActiveFilters(){
+    const f={};
+    document.querySelectorAll('.filter-item').forEach(item=>{
+      const key=item.querySelector('.filter-dir').dataset.key;
+      const dir=item.querySelector('.filter-dir').value;
+      const val=parseFloat(item.querySelector('.filter-val').value);
+      if(dir&&!isNaN(val)) f[key]={dir,val};
+    });
+    return f;
+  }
+
+  function applyRowFilters(){
+    const filters=getActiveFilters();
+    const rows=document.querySelectorAll('.hist-table tbody tr');
+    let visible=0, total=0;
+    rows.forEach(tr=>{
+      const pingNum=tr.dataset.ping?parseFloat(tr.dataset.ping):null;
+      const dlNum=tr.dataset.dl?parseFloat(tr.dataset.dl):null;
+      const ulNum=tr.dataset.ul?parseFloat(tr.dataset.ul):null;
+      let match=true;
+      if(filters.ping&&pingNum!==null){
+        if(filters.ping.dir==='over') match=pingNum>=filters.ping.val;
+        else match=pingNum<=filters.ping.val;
+      }
+      if(match&&filters.download&&dlNum!==null){
+        if(filters.download.dir==='over') match=dlNum>=filters.download.val;
+        else match=dlNum<=filters.download.val;
+      }
+      if(match&&filters.upload&&ulNum!==null){
+        if(filters.upload.dir==='over') match=ulNum>=filters.upload.val;
+        else match=ulNum<=filters.upload.val;
+      }
+      // If value is null (dash) and there's a filter, hide the row
+      if(filters.ping&&pingNum===null) match=false;
+      if(filters.download&&dlNum===null) match=false;
+      if(filters.upload&&ulNum===null) match=false;
+      tr.style.display=match?'':'none';
+      if(match) visible++;
+      total++;
+    });
+    return {visible,total};
+  }
+
+  function updateFilterStatus(){
+    const filters=getActiveFilters();
+    const active=Object.keys(filters).length;
+    const el=document.getElementById('filterStatus');
+    if(!active){ el.textContent=''; el.className='filter-status'; return; }
+    const {visible,total}=applyRowFilters();
+    el.textContent=`${visible} of ${total} rows`;
+    el.className='filter-status active';
+  }
+
+  function getRowsFromDOM(){
+    const rows=[];
+    document.querySelectorAll('.hist-table tbody tr').forEach(tr=>{
+      rows.push({
+        ping: tr.dataset.ping ? parseFloat(tr.dataset.ping) : null,
+        download: tr.dataset.dl ? parseFloat(tr.dataset.dl) : null,
+        upload: tr.dataset.ul ? parseFloat(tr.dataset.ul) : null,
+      });
+    });
+    return rows;
+  }
+
+  // ---- Highlight rules (saved to /api/settings) ----
+
+  function getHighlightRules(){
+    return _settings.highlight_rules || [];
+  }
+
+  function saveHighlightRules(rules){
+    _settings.highlight_rules = rules;
+    saveSettings();
+  }
+
+  function ruleMatches(rule, pingNum, dlNum, ulNum){
+    let val=null;
+    if(rule.metric==='ping') val=pingNum;
+    else if(rule.metric==='download') val=dlNum;
+    else if(rule.metric==='upload') val=ulNum;
+    if(val===null) return false;
+    if(rule.direction==='over') return val>=rule.threshold;
+    return val<=rule.threshold;
+  }
+
+  function renderHighlightRuleList(){
+    const rules=getHighlightRules();
+    const list=document.getElementById('hruleList');
+    const count=document.getElementById('hruleCount');
+    if(!rules.length){
+      list.innerHTML='<div style="font-size:0.72rem;color:var(--subtext);padding:4px 0">No highlight rules yet. Add one below.</div>';
+      count.textContent='';
+      count.className='hrule-count';
+    }else{
+      count.textContent=`(${rules.length})`;
+      count.className='hrule-count visible';
+    }
+    let html='';
+    rules.forEach((rule,i)=>{
+      html+=`<div class="hrule-row">
+        <select class="hrule-metric" data-idx="${i}">
+          <option value="ping" ${rule.metric==='ping'?'selected':''}>Ping</option>
+          <option value="download" ${rule.metric==='download'?'selected':''}>Download</option>
+          <option value="upload" ${rule.metric==='upload'?'selected':''}>Upload</option>
+        </select>
+        <select class="hrule-dir" data-idx="${i}">
+          <option value="over" ${rule.direction==='over'?'selected':''}>Over</option>
+          <option value="under" ${rule.direction==='under'?'selected':''}>Under</option>
+        </select>
+        <input type="number" class="hrule-val" data-idx="${i}" value="${rule.threshold}" min="0" step="1" placeholder="Value">
+        <input type="color" class="hrule-color" data-idx="${i}" value="${rule.color}">
+        <button class="hrule-remove" data-idx="${i}" title="Remove rule">✕</button>
+      </div>`;
+    });
+    list.innerHTML=html;
+    // Attach change handlers
+    list.querySelectorAll('.hrule-metric, .hrule-dir').forEach(el=>{
+      el.addEventListener('change',()=>updateRule(parseInt(el.dataset.idx)));
+    });
+    list.querySelectorAll('.hrule-val').forEach(el=>{
+      el.addEventListener('input',()=>updateRule(parseInt(el.dataset.idx)));
+    });
+    list.querySelectorAll('.hrule-color').forEach(el=>{
+      el.addEventListener('input',()=>updateRule(parseInt(el.dataset.idx)));
+    });
+    list.querySelectorAll('.hrule-remove').forEach(el=>{
+      el.addEventListener('click',()=>{
+        const rules=getHighlightRules();
+        rules.splice(parseInt(el.dataset.idx),1);
+        saveHighlightRules(rules);
+        renderHighlightRuleList();
+        fetchHistory(); // re-render to update highlights
+      });
+    });
+  }
+
+  function updateRule(idx){
+    const rules=getHighlightRules();
+    if(idx<0||idx>=rules.length) return;
+    const list=document.getElementById('hruleList');
+    const metric=list.querySelector(`.hrule-metric[data-idx="${idx}"]`);
+    const dir=list.querySelector(`.hrule-dir[data-idx="${idx}"]`);
+    const val=list.querySelector(`.hrule-val[data-idx="${idx}"]`);
+    const color=list.querySelector(`.hrule-color[data-idx="${idx}"]`);
+    if(metric) rules[idx].metric=metric.value;
+    if(dir) rules[idx].direction=dir.value;
+    if(val) rules[idx].threshold=parseFloat(val.value)||0;
+    if(color) rules[idx].color=color.value;
+    saveHighlightRules(rules);
+    fetchHistory(); // re-render table
+  }
+
   function renderHistory(entries){
     const container=document.getElementById('history-container');
     if(!entries||entries.length===0){
@@ -622,6 +903,7 @@
     // Normalize old em-dashes in history entries
     entries.forEach(e=>{if(e.network)for(const k in e.network)if(e.network[k]==='\u2014')e.network[k]='\u2013';});
     const reversed=[...entries].reverse();
+    const rules=getHighlightRules();
     let html='<table class="hist-table"><thead><tr><th>#</th><th>Time</th><th>Ping</th><th>Download</th><th>Upload</th><th>Network at test time</th></tr></thead><tbody>';
     reversed.forEach((entry,i)=>{
       const n=reversed.length-i;
@@ -630,6 +912,9 @@
       const dl=entry.download||'–';
       const ul=entry.upload||'–';
       const ts=entry.timestamp||'–';
+      const pingNum=parseMetric(ping);
+      const dlNum=parseMetric(dl);
+      const ulNum=parseMetric(ul);
       let tags='';
       const isWifiHist = net.conn_type && net.conn_type.toLowerCase().startsWith('wifi');
       if(net.ssid&&net.ssid!=='–'&&isWifiHist) tags+=`<span class="hist-tag name">${esc(net.ssid)}</span>`;
@@ -640,10 +925,22 @@
       if(net.bit_rate&&net.bit_rate!=='–'&&isWifiHist) tags+=`<span class="hist-tag">${esc(net.bit_rate)}</span>`;
       if(!tags) tags='<span class="hist-tag">–</span>';
       const realIdx = entries.length - 1 - i;  // map reversed display → actual array index
-      html+=`<tr style="position:relative"><td class="hist-num">${String(n).padStart(2,'0')}</td><td>${esc(ts)}</td><td style="color:var(--amber)">${esc(ping)}</td><td class="dl-color">${esc(dl)}</td><td class="ul-color">${esc(ul)}</td><td>${tags}<button class="hist-del" data-idx="${realIdx}" title="Delete entry">✕</button></td></tr>`;
+      // Determine highlight: last matching rule wins
+      let hlBg='', hlBorder='', hlClass='';
+      for(const rule of rules){
+        if(ruleMatches(rule,pingNum,dlNum,ulNum)){
+          hlBg=`background:${rule.color}18;`;
+          hlBorder=`border-left:3px solid ${rule.color};`;
+          hlClass=' hl-row';
+        }
+      }
+      html+=`<tr style="position:relative;${hlBg}" class="${hlClass}" data-ping="${pingNum??''}" data-dl="${dlNum??''}" data-ul="${ulNum??''}"><td class="hist-num" style="${hlBorder}">${String(n).padStart(2,'0')}</td><td>${esc(ts)}</td><td style="color:var(--amber)">${esc(ping)}</td><td class="dl-color">${esc(dl)}</td><td class="ul-color">${esc(ul)}</td><td>${tags}<button class="hist-del" data-idx="${realIdx}" title="Delete entry">✕</button></td></tr>`;
     });
     html+='</tbody></table>';
     container.innerHTML=html;
+
+    // Apply filters
+    updateFilterStatus();
 
     // Attach delete handlers via event delegation
     container.querySelectorAll('.hist-del').forEach(btn => {
@@ -661,10 +958,108 @@
 
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+  // ---- Filter & highlight init ----
+  function setupFiltersAndHighlights(){
+    // Filter inputs: re-apply on change
+    document.querySelectorAll('.filter-dir').forEach(sel=>{
+      sel.addEventListener('change',()=>{
+        sel.classList.toggle('active',!!sel.value);
+        const key=sel.dataset.key;
+        const valInput=document.querySelector(`.filter-val[data-key="${key}"]`);
+        if(sel.value && !valInput.value) valInput.focus();
+        updateFilterStatus();
+      });
+    });
+    document.querySelectorAll('.filter-val').forEach(inp=>{
+      inp.addEventListener('input',()=>updateFilterStatus());
+      inp.addEventListener('keydown',(e)=>{
+        if(e.key==='Enter') updateFilterStatus();
+      });
+    });
+    document.getElementById('filterClear').addEventListener('click',()=>{
+      document.querySelectorAll('.filter-dir').forEach(s=>{ s.value=''; s.classList.remove('active'); });
+      document.querySelectorAll('.filter-val').forEach(v=>v.value='');
+      updateFilterStatus();
+    });
+
+    // Highlight rules
+    renderHighlightRuleList();
+    document.getElementById('hruleToggle').addEventListener('click',()=>{
+      const body=document.getElementById('hruleBody');
+      const toggle=document.getElementById('hruleToggle');
+      const visible=body.style.display!=='none';
+      body.style.display=visible?'none':'block';
+      toggle.classList.toggle('expanded',!visible);
+      toggle.textContent=visible?'Highlight Rules':'Highlight Rules';
+    });
+    document.getElementById('hruleAdd').addEventListener('click',()=>{
+      const rules=getHighlightRules();
+      rules.push({metric:'download',direction:'over',threshold:100,color:'#4ade80'});
+      saveHighlightRules(rules);
+      renderHighlightRuleList();
+      // Expand if collapsed
+      const body=document.getElementById('hruleBody');
+      if(body.style.display==='none'){
+        body.style.display='block';
+        document.getElementById('hruleToggle').classList.add('expanded');
+        document.getElementById('hruleToggle').textContent='Highlight Rules';
+      }
+      fetchHistory();
+    });
+  }
+
+  // ---- Auto-test persistence ----
+  function saveAutoState() {
+    if (_autoMinutes > 0) {
+      _settings.auto_test = { minutes: _autoMinutes, last_end: _lastTestEnd || null };
+    } else {
+      delete _settings.auto_test;
+    }
+    saveSettings();
+  }
+
+  function restoreAutoState() {
+    const saved = _settings.auto_test;
+    if (!saved || !saved.minutes) return;
+    const sel = document.getElementById('stAuto');
+    sel.value = String(saved.minutes);
+    const intervalMs = saved.minutes * 60 * 1000;
+    if (saved.last_end) {
+      const remaining = Math.max(0, intervalMs - (Date.now() - saved.last_end));
+      if (remaining <= 1000) {
+        setAutoTest(saved.minutes);
+      } else {
+        setAutoTest(saved.minutes, remaining);
+      }
+    } else {
+      setAutoTest(saved.minutes);
+    }
+  }
+
+  // ---- Settings persistence ----
+  function saveSettings() {
+    fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(_settings)
+    }).catch(() => {});
+  }
+
   // ---- Init ----
-  fetchStats();
-  fetchHistory();
-  setInterval_(3000);
+  async function init() {
+    // Load user settings from server before anything reads them
+    try {
+      const resp = await fetch('/api/settings');
+      _settings = await resp.json();
+    } catch(e) { _settings = {}; }
+
+    fetchStats();
+    fetchHistory();
+    setInterval_(3000);
+    setupFiltersAndHighlights();
+    restoreAutoState();
+  }
+  init();
 </script>
 </body>
 </html>

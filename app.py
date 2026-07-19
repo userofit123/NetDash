@@ -15,6 +15,7 @@ _prev = {'rx': 0, 'tx': 0, 'time': time.time()}
 _host_iface = None
 
 HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'speedtest_history.json')
+SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'settings.json')
 _speedtest_history = []
 
 def load_history():
@@ -372,6 +373,33 @@ def delete_history_entry(index):
             pass
         return jsonify({'status': 'deleted'})
     return jsonify({'status': 'not found'}), 404
+
+
+# ── User settings: highlight rules, auto-test state ──
+
+def _load_settings():
+    try:
+        with open(SETTINGS_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def _save_settings(data):
+    try:
+        os.makedirs(os.path.dirname(SETTINGS_FILE), exist_ok=True)
+        with open(SETTINGS_FILE, 'w') as f:
+            json.dump(data, f, indent=2)
+    except Exception:
+        pass
+
+
+@app.route('/api/settings', methods=['GET', 'POST'])
+def user_settings():
+    if request.method == 'GET':
+        return jsonify(_load_settings())
+    data = request.get_json(silent=True) or {}
+    _save_settings(data)
+    return jsonify({'status': 'saved'})
 
 
 import urllib.request
