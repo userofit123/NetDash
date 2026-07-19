@@ -1,0 +1,16 @@
+[Unit]
+Description=NetDash network diagnostics dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=rr
+WorkingDirectory=/home/rr/WWS/netdash
+ExecStart=/usr/bin/python3 /home/rr/WWS/netdash/app.py
+Restart=always
+RestartSec=5
+StandardOutput=append:/tmp/netdash.log
+StandardError=append:/tmp/netdash.log
+
+[Install]
+WantedBy=multi-user.target
