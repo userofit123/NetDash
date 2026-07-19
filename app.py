@@ -1,15 +1,16 @@
 from flask import Flask, jsonify, send_file, request, Response
 import re, time, socket, os, json
-import urllib.request as _urllib
-
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
-# ── No external speed test library needed at all. ────────────────
+# ── Speedtest architecture ───────────────────────────────────────
 # LibreSpeed JS (speedtest.js + speedtest_worker.js) runs in the
-# browser and hits these Flask endpoints directly.  The browser
-# opens multiple parallel fetch streams — exactly like speedtest.net —
-# so results are accurate and no additional software is ever required.
-# Works in Capacitor (Android / iOS) without modification.
+# browser and connects to community test servers (fetched via the
+# /api/librespeed-servers proxy).  The browser opens multiple
+# parallel fetch streams — exactly like speedtest.net — so results
+# are accurate and no additional software is ever required.
+# The Flask backend handles live /proc/net/dev stats, WiFi diags,
+# history/ settings persistence, and server-list proxy — it does
+# not carry the speedtest traffic itself.
 
 _prev = {'rx': 0, 'tx': 0, 'time': time.time()}
 _host_iface = None
@@ -269,66 +270,6 @@ def fmt_speed(bps):
     if bps >= 1_000_000: return f"{bps/1_000_000:.2f} MB/s"
     if bps >= 1_000:     return f"{bps/1_000:.1f} KB/s"
     return f"{int(bps)} B/s"
-
-
-# ── LibreSpeed backend endpoints ─────────────────────────────────
-#
-# Browser → Flask (same origin, zero CORS).
-# Download is proxied from an external CDN so the browser measures
-# real internet speed, not localhost loopback.
-
-@app.route('/backend/garbage')
-def garbage():
-    """Proxy a real internet download so the browser measures WAN speed."""
-    ck_size = int(request.args.get('ckSize', 20))  # MB
-    total = ck_size * 1024 * 1024
-
-    def generate():
-        sent = 0
-        try:
-            # Fast, reliable CDN with a 100 MB test file
-            resp = _urllib.urlopen(
-                'http://speedtest.tele2.net/100MB.zip', timeout=30
-            )
-            while sent < total:
-                chunk = resp.read(65536)
-                if not chunk:
-                    break
-                yield chunk
-                sent += len(chunk)
-            resp.close()
-        except Exception:
-            while sent < total:
-                piece = min(20 * 1024 * 1024, total - sent)
-                yield os.urandom(piece)
-                sent += piece
-
-    resp = Response(generate(), mimetype='application/octet-stream')
-    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
-    resp.headers['Pragma'] = 'no-cache'
-    return resp
-
-
-@app.route('/backend/upload', methods=['POST'])
-def upload():
-    """Upload test — browser POSTs blobs, we discard and report size."""
-    size = request.content_length or 0
-    request.stream.read()
-    return jsonify({'received': size})
-
-
-@app.route('/backend/ping')
-def ping():
-    """Latency test — tiny response, measured by browser."""
-    resp = Response('pong', mimetype='text/plain')
-    resp.headers['Cache-Control'] = 'no-store'
-    return resp
-
-
-@app.route('/backend/getIp')
-def get_ip():
-    """Returns client IP for UI display."""
-    return jsonify({'processedString': request.remote_addr, 'rawIspInfo': ''})
 
 
 # ── History: the JS frontend POSTs results here when a test ends ──

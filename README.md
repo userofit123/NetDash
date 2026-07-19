@@ -18,7 +18,7 @@ Real-time network monitoring dashboard with live speed gauges, WiFi diagnostics,
 ### Direct (Python)
 
 ```bash
-pip install flask speedtest-cli
+pip install flask
 python3 app.py
 ```
 
@@ -63,7 +63,7 @@ Open **http://localhost:5000**. Auto-restarts on reboot.
 
 **WiFi data shows dashes:** Install `network-manager`, `iw`, and `wireless-tools`.
 
-**Speedtest button fails:** Run `speedtest-cli --simple` in a terminal to check connectivity.
+**Speedtest button fails:** Ensure your browser can reach external LibreSpeed test servers (check firewall/proxy).
 
 **Port 5000 in use:** Change the port at the bottom of `app.py`.
 
@@ -72,19 +72,21 @@ Open **http://localhost:5000**. Auto-restarts on reboot.
 | Metric | Source |
 |---|---|
 | Download/Upload speed | `/proc/net/dev` byte counters, polled on interval |
-| Internet status | DNS resolution of `8.8.8.8` |
+| Internet status | DNS resolution of `dns.google` |
 | Connection type, SSID, signal, band | `nmcli device wifi list` and `ip route show` |
 | WiFi standard, link rate, frequency | `iw dev <iface> link` |
-| Speedtest | `speedtest-cli --simple` in a background thread |
+| Speedtest | LibreSpeed JS in the browser, connects to community test servers via `/api/librespeed-servers` proxy |
 
 ## API
 
 | Endpoint | Method | Returns |
 |---|---|---|
 | `/api/stats` | GET | All live network metrics |
-| `/api/speedtest/run` | POST | Starts a test |
-| `/api/speedtest/result` | GET | Current test status and result |
 | `/api/speedtest/history` | GET | All past results with network snapshots |
+| `/api/speedtest/history/save` | POST | Persist a completed test result |
+| `/api/speedtest/history/<id>` | DELETE | Remove a history entry |
+| `/api/settings` | GET/POST | User preferences (highlight rules, auto-test) |
+| `/api/librespeed-servers` | GET | Proxied LibreSpeed server list for speedtest |
 
 ## License
 
